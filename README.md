@@ -67,14 +67,26 @@ func main() {
 		MaxSteps:     10,
 	})
 
-	result, err := toolAgent.Generate(ctx, agent.AgentCallOptions{
+	stream, err := toolAgent.Stream(ctx, agent.AgentCallOptions{
 		Prompt: "What is the weather in San Francisco?",
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer stream.Close()
 
-	fmt.Println(result.Text)
+	for part := range stream.Part() {
+		switch part.Type {
+		case "text-delta":
+			fmt.Print(part.Text)
+		case "tool-call":
+			fmt.Printf("\n[tool: %s]\n", part.ToolName)
+		case "finish":
+			fmt.Printf("\n[finish: %s]\n", part.FinishReason)
+		case "error":
+			fmt.Printf("\n[error: %v]\n", part.Error)
+		}
+	}
 }
 ```
 
@@ -127,26 +139,7 @@ bedrock.Create(bedrock.BedrockProviderSettings{
 
 ## Streaming
 
-```go
-stream, err := toolAgent.Stream(ctx, agent.AgentCallOptions{Prompt: "Tell me a short story"})
-if err != nil {
-	log.Fatal(err)
-}
-defer stream.Close()
-
-for part := range stream.Part() {
-	switch part.Type {
-	case "text-delta":
-		fmt.Print(part.Text)
-	case "tool-call":
-		fmt.Printf("\n[tool: %s]\n", part.ToolName)
-	case "finish":
-		fmt.Printf("\n[finish: %s]\n", part.FinishReason)
-	case "error":
-		fmt.Printf("\n[error: %v]\n", part.Error)
-	}
-}
-```
+The quick start above uses streaming by default.
 
 ## Package Layout
 
