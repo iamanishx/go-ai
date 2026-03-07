@@ -307,7 +307,7 @@ func (a *ToolLoopAgent) generate(ctx context.Context, opts AgentCallOptions, str
 			})
 		}
 
-		result, err := a.executeStep(ctx, messages, streaming, stepNum)
+		result, err := a.executeStep(ctx, messages, streaming, stepNum, nil)
 		if err != nil {
 			return AgentGenerateResult{}, err
 		}
@@ -433,7 +433,11 @@ func (a *ToolLoopAgent) stream(ctx context.Context, opts AgentCallOptions) (*str
 				})
 			}
 
-			result, err := a.executeStep(ctx, messages, true, stepNum)
+			result, err := a.executeStep(ctx, messages, true, stepNum, func(part provider.StreamPart) {
+				if part.Type == "text-delta" || part.Type == "tool-call" {
+					reader.WritePart(part)
+				}
+			})
 			if err != nil {
 				reader.SetError(err)
 				reader.WritePart(provider.StreamPart{Type: "error", Error: err})
@@ -446,20 +450,6 @@ func (a *ToolLoopAgent) stream(ctx context.Context, opts AgentCallOptions) (*str
 			totalUsage.InputTokens += result.Usage.InputTokens
 			totalUsage.OutputTokens += result.Usage.OutputTokens
 			totalUsage.TotalTokens += result.Usage.TotalTokens
-
-			if result.Text != "" {
-				reader.WritePart(provider.StreamPart{Type: "text-delta", Text: result.Text})
-			}
-
-			for _, tc := range result.ToolCalls {
-				inputJSON, _ := json.Marshal(tc.Input)
-				reader.WritePart(provider.StreamPart{
-					Type:       "tool-call",
-					ToolCallID: tc.ID,
-					ToolName:   tc.Name,
-					ToolInput:  string(inputJSON),
-				})
-			}
 
 			for _, tr := range result.ToolResults {
 				reader.WritePart(provider.StreamPart{
@@ -529,7 +519,7 @@ type stepResult struct {
 	Messages     []provider.Message
 }
 
-func (a *ToolLoopAgent) executeStep(ctx context.Context, messages []provider.Message, streaming bool, stepNum int) (stepResult, error) {
+func (a *ToolLoopAgent) executeStep(ctx context.Context, messages []provider.Message, streaming bool, stepNum int, onPart func(provider.StreamPart)) (stepResult, error) {
 	tools := make([]provider.Tool, 0)
 	for _, t := range a.tools {
 		tools = append(tools, t)
@@ -556,8 +546,14 @@ func (a *ToolLoopAgent) executeStep(ctx context.Context, messages []provider.Mes
 			if part.Type == "error" {
 				return stepResult{}, part.Error
 			} else if part.Type == "text-delta" {
+				if onPart != nil {
+					onPart(part)
+				}
 				text.WriteString(part.Text)
 			} else if part.Type == "tool-call" {
+				if onPart != nil {
+					onPart(part)
+				}
 				toolCalls = append(toolCalls, provider.ToolCall{
 					ID:    part.ToolCallID,
 					Name:  part.ToolName,
