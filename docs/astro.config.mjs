@@ -12,24 +12,31 @@ export default defineConfig({
       },
       sidebar: [
         {
-          label: 'Getting Started',
-          autogenerate: { directory: 'guides' },
+          label: 'Start Here',
+          items: [
+            { label: 'Introduction', link: '/' },
+            { label: 'Getting Started', link: '/guides/getting-started/' },
+          ],
         },
         {
-          label: 'Guides',
+          label: 'Core Concepts',
           items: [
             { label: 'Agent', link: '/agent/' },
-            { label: 'Provider', link: '/provider/' },
             { label: 'Stream', link: '/stream/' },
           ],
         },
         {
           label: 'Providers',
-          autogenerate: { directory: 'provider' },
+          items: [
+            { label: 'Overview', link: '/provider/' },
+            { label: 'Amazon Bedrock', link: '/provider/bedrock/' },
+          ],
         },
         {
           label: 'Examples',
-          autogenerate: { directory: 'examples' },
+          items: [
+            { label: 'All Examples', link: '/examples/' },
+          ],
         },
       ],
       customCss: [
