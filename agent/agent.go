@@ -6,8 +6,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/ai-sdk/go-ai/provider"
-	"github.com/ai-sdk/go-ai/stream"
+	"github.com/iamanishx/go-ai/provider"
+	"github.com/iamanishx/go-ai/stream"
 )
 
 type stringBuilder struct {

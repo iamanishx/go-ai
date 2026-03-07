@@ -15,7 +15,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ai-sdk/go-ai/provider"
+	"github.com/iamanishx/go-ai/provider"
 )
 
 type Provider interface {
