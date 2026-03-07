@@ -13,10 +13,7 @@ export default defineConfig({
       sidebar: [
         {
           label: 'Getting Started',
-          items: [
-            { label: 'Introduction', link: '/' },
-            { label: 'Getting Started', link: '/guides/getting-started/' },
-          ],
+          autogenerate: { directory: 'guides' },
         },
         {
           label: 'Guides',
@@ -28,15 +25,11 @@ export default defineConfig({
         },
         {
           label: 'Providers',
-          items: [
-            { label: 'Amazon Bedrock', link: '/provider/bedrock/' },
-          ],
+          autogenerate: { directory: 'provider' },
         },
         {
           label: 'Examples',
-          items: [
-            { label: 'Examples', link: '/examples/' },
-          ],
+          autogenerate: { directory: 'examples' },
         },
       ],
       customCss: [
