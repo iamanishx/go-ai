@@ -338,7 +338,9 @@ func (m *BedrockChatModel) GenerateText(ctx context.Context, opts provider.Gener
 	var usage provider.Usage
 
 	for part := range streamParts {
-		if part.Type == "text-delta" {
+		if part.Type == "error" {
+			return provider.GenerateTextResult{}, part.Error
+		} else if part.Type == "text-delta" {
 			text.WriteString(part.Text)
 		} else if part.Type == "tool-call" {
 			toolCalls = append(toolCalls, provider.ToolCall{
