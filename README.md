@@ -80,9 +80,14 @@ func main() {
 		case "text-delta":
 			fmt.Print(part.Text)
 		case "tool-call":
-			fmt.Printf("\n[tool: %s]\n", part.ToolName)
+			fmt.Printf("\n[tool-call: %s id=%s input=%s]\n", part.ToolName, part.ToolCallID, part.ToolInput)
+		case "tool-input-delta":
+			fmt.Print(part.ToolInputDelta)
+		case "tool-result":
+			fmt.Printf("\n[tool-result: %s id=%s output=%s]\n", part.ToolName, part.ToolCallID, part.ToolResult)
 		case "finish":
-			fmt.Printf("\n[finish: %s]\n", part.FinishReason)
+			fmt.Printf("\n[finish: %s tokens(in=%d out=%d total=%d)]\n",
+				part.FinishReason, part.Usage.InputTokens, part.Usage.OutputTokens, part.Usage.TotalTokens)
 		case "error":
 			fmt.Printf("\n[error: %v]\n", part.Error)
 		}
