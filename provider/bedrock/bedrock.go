@@ -312,7 +312,28 @@ type BedrockResponse struct {
 	Model        string                   `json:"model"`
 	StopReason   string                   `json:"stop_reason"`
 	StopSequence string                   `json:"stop_sequence"`
-	Usage        map[string]int           `json:"usage"`
+	Usage        BedrockUsage             `json:"usage"`
+}
+
+type BedrockUsage struct {
+	InputTokens     int `json:"input_tokens"`
+	OutputTokens    int `json:"output_tokens"`
+	InputTokensAlt  int `json:"inputTokens"`
+	OutputTokensAlt int `json:"outputTokens"`
+}
+
+func (u BedrockUsage) Input() int {
+	if u.InputTokens > 0 {
+		return u.InputTokens
+	}
+	return u.InputTokensAlt
+}
+
+func (u BedrockUsage) Output() int {
+	if u.OutputTokens > 0 {
+		return u.OutputTokens
+	}
+	return u.OutputTokensAlt
 }
 
 func (m *BedrockChatModel) GenerateText(ctx context.Context, opts provider.GenerateTextOptions) (provider.GenerateTextResult, error) {
@@ -457,10 +478,12 @@ func (m *BedrockChatModel) StreamText(ctx context.Context, opts provider.Generat
 			}
 		}
 
+		inputTokens := bedrockResp.Usage.Input()
+		outputTokens := bedrockResp.Usage.Output()
 		usage := provider.Usage{
-			InputTokens:  bedrockResp.Usage["input_tokens"],
-			OutputTokens: bedrockResp.Usage["output_tokens"],
-			TotalTokens:  bedrockResp.Usage["input_tokens"] + bedrockResp.Usage["output_tokens"],
+			InputTokens:  inputTokens,
+			OutputTokens: outputTokens,
+			TotalTokens:  inputTokens + outputTokens,
 		}
 
 		parts <- provider.StreamPart{
