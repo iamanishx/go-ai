@@ -38,4 +38,4 @@ Thumbs.db
 docs/node_modules/
 docs/dist/
 docs/.astro/
-docs/package-lock.json
+
