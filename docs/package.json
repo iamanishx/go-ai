@@ -1,0 +1,16 @@
+{
+  "name": "go-ai-docs",
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/starlight": "^0.24.0",
+    "astro": "^4.8.0"
+  }
+}

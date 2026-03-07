@@ -33,3 +33,9 @@ Thumbs.db
 # Environment
 .env
 .env.local
+
+# Astro/Docs
+docs/node_modules/
+docs/dist/
+docs/.astro/
+docs/package-lock.json
