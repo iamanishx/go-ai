@@ -2,6 +2,7 @@ package agent
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"sync"
@@ -493,8 +494,13 @@ func (a *ToolLoopAgent) executeStep(ctx context.Context, messages []provider.Mes
 		var text stringBuilder
 		var toolCalls []provider.ToolCall
 
+		var finishReason string
+		var usage provider.Usage
+
 		for part := range streamParts {
-			if part.Type == "text-delta" {
+			if part.Type == "error" {
+				return stepResult{}, part.Error
+			} else if part.Type == "text-delta" {
 				text.WriteString(part.Text)
 			} else if part.Type == "tool-call" {
 				toolCalls = append(toolCalls, provider.ToolCall{
@@ -502,6 +508,9 @@ func (a *ToolLoopAgent) executeStep(ctx context.Context, messages []provider.Mes
 					Name:  part.ToolName,
 					Input: parseInput(part.ToolInput),
 				})
+			} else if part.Type == "finish" {
+				finishReason = part.FinishReason
+				usage = part.Usage
 			}
 		}
 
@@ -512,12 +521,16 @@ func (a *ToolLoopAgent) executeStep(ctx context.Context, messages []provider.Mes
 
 		messages = newMessages
 
+		if finishReason == "" && len(toolCalls) > 0 {
+			finishReason = "tool-use"
+		}
+
 		return stepResult{
 			Text:         text.String(),
 			ToolCalls:    toolCalls,
 			ToolResults:  toolResults,
-			FinishReason: "tool-use",
-			Usage:        provider.Usage{},
+			FinishReason: finishReason,
+			Usage:        usage,
 		}, nil
 	} else {
 		result, err := a.model.GenerateText(ctx, genOpts)
@@ -631,5 +644,6 @@ func parseInput(input string) map[string]interface{} {
 		return nil
 	}
 	var result map[string]interface{}
+	json.Unmarshal([]byte(input), &result)
 	return result
 }

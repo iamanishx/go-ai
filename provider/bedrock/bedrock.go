@@ -98,61 +98,50 @@ func loadCredentialsFromFile(path, profile string) (Credentials, error) {
 		return Credentials{}, err
 	}
 
-	currentSection := ""
 	lines := strings.Split(string(data), "\n")
+	inSection := false
+	creds := Credentials{}
+
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
 
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+
 		if strings.HasPrefix(line, "[") && strings.HasSuffix(line, "]") {
-			currentSection = strings.Trim(line, "[]")
+			section := strings.TrimSpace(strings.Trim(line, "[]"))
+			inSection = section == profile || section == "profile "+profile
 			continue
 		}
 
-		expectedSection := "profile " + profile
-		if currentSection != profile && currentSection != expectedSection {
+		if !inSection {
 			continue
 		}
 
-		if strings.HasPrefix(line, "aws_access_key_id") {
-			parts := strings.SplitN(line, "=", 2)
-			if len(parts) == 2 {
-				return Credentials{
-					AccessKeyID: strings.TrimSpace(parts[1]),
-				}, nil
-			}
+		parts := strings.SplitN(line, "=", 2)
+		if len(parts) != 2 {
+			continue
 		}
 
-		if strings.HasPrefix(line, "aws_secret_access_key") {
-			parts := strings.SplitN(line, "=", 2)
-			if len(parts) == 2 {
-				creds := Credentials{}
-				for _, l := range lines {
-					l = strings.TrimSpace(l)
-					if strings.HasPrefix(l, "aws_access_key_id") {
-						p := strings.SplitN(l, "=", 2)
-						if len(p) == 2 {
-							creds.AccessKeyID = strings.TrimSpace(p[1])
-						}
-					}
-					if strings.HasPrefix(l, "aws_secret_access_key") {
-						p := strings.SplitN(l, "=", 2)
-						if len(p) == 2 {
-							creds.SecretAccessKey = strings.TrimSpace(p[1])
-						}
-					}
-					if strings.HasPrefix(l, "aws_session_token") {
-						p := strings.SplitN(l, "=", 2)
-						if len(p) == 2 {
-							creds.SessionToken = strings.TrimSpace(p[1])
-						}
-					}
-				}
-				return creds, nil
-			}
+		key := strings.TrimSpace(parts[0])
+		value := strings.TrimSpace(parts[1])
+
+		switch key {
+		case "aws_access_key_id":
+			creds.AccessKeyID = value
+		case "aws_secret_access_key":
+			creds.SecretAccessKey = value
+		case "aws_session_token":
+			creds.SessionToken = value
 		}
 	}
 
-	return Credentials{}, fmt.Errorf("credentials not found for profile %s", profile)
+	if creds.AccessKeyID == "" || creds.SecretAccessKey == "" {
+		return Credentials{}, fmt.Errorf("credentials not found for profile %s", profile)
+	}
+
+	return creds, nil
 }
 
 type WebIdentityCredentialProvider struct {
@@ -372,6 +361,10 @@ func (m *BedrockChatModel) StreamText(ctx context.Context, opts provider.Generat
 		StopSequences:    opts.StopSequences,
 	}
 
+	if body.MaxTokens == 0 {
+		body.MaxTokens = 4096
+	}
+
 	if opts.System != "" {
 		body.System = opts.System
 	}
@@ -545,7 +538,6 @@ func signRequest(req *http.Request, region, accessKeyID, secretAccessKey, sessio
 	dateStamp := now.Format("20060102")
 
 	req.Header.Set("X-Amz-Date", amzDate)
-	req.Header.Set("X-Amz-Target", "AmazonBedrockRuntime.InvokeModel")
 	req.Header.Set("Content-Type", "application/json")
 
 	payloadHash := sha256Hash([]byte{})
@@ -558,15 +550,31 @@ func signRequest(req *http.Request, region, accessKeyID, secretAccessKey, sessio
 
 	req.Header.Set("X-Amz-Content-Sha256", payloadHash)
 
-	canonicalHeaders := fmt.Sprintf("content-type:%s\nhost:%s\nx-amz-content-sha256:%s\nx-amz-date:%s\nx-amz-target:%s\n",
-		req.Header.Get("Content-Type"),
-		host,
-		req.Header.Get("X-Amz-Content-Sha256"),
-		amzDate,
-		req.Header.Get("X-Amz-Target"),
-	)
+	if sessionToken != "" {
+		req.Header.Set("X-Amz-Security-Token", sessionToken)
+	}
 
-	signedHeaders := "content-type;host;x-amz-content-sha256;x-amz-date;x-amz-target"
+	var canonicalHeaders string
+	var signedHeaders string
+
+	if sessionToken != "" {
+		canonicalHeaders = fmt.Sprintf("content-type:%s\nhost:%s\nx-amz-content-sha256:%s\nx-amz-date:%s\nx-amz-security-token:%s\n",
+			req.Header.Get("Content-Type"),
+			host,
+			payloadHash,
+			amzDate,
+			sessionToken,
+		)
+		signedHeaders = "content-type;host;x-amz-content-sha256;x-amz-date;x-amz-security-token"
+	} else {
+		canonicalHeaders = fmt.Sprintf("content-type:%s\nhost:%s\nx-amz-content-sha256:%s\nx-amz-date:%s\n",
+			req.Header.Get("Content-Type"),
+			host,
+			payloadHash,
+			amzDate,
+		)
+		signedHeaders = "content-type;host;x-amz-content-sha256;x-amz-date"
+	}
 
 	canonicalRequest := fmt.Sprintf("%s\n%s\n%s\n%s\n%s\n%s",
 		method,
@@ -599,10 +607,6 @@ func signRequest(req *http.Request, region, accessKeyID, secretAccessKey, sessio
 		signedHeaders,
 		signature,
 	)
-
-	if sessionToken != "" {
-		req.Header.Set("X-Amz-Security-Token", sessionToken)
-	}
 
 	req.Header.Set("Authorization", authHeader)
 }
