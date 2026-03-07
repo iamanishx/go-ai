@@ -1,9 +1,9 @@
 ---
 title: Getting Started
-description: Get started with Go AI SDK in minutes
+description: Install, configure Bedrock, and run your first tool loop
 ---
 
-This guide will help you get started with Go AI SDK.
+This guide walks through the current production path: Bedrock provider + ToolLoopAgent.
 
 ## Installation
 
@@ -11,32 +11,39 @@ This guide will help you get started with Go AI SDK.
 go get github.com/iamanishx/go-ai
 ```
 
-## Basic Usage
-
-### 1. Create a Provider
+## 1) Create a Bedrock Provider
 
 ```go
 import "github.com/iamanishx/go-ai/provider/bedrock"
 
-// Using AWS profile
-provider := bedrock.Create(bedrock.BedrockProviderSettings{
+bedrockProvider := bedrock.Create(bedrock.BedrockProviderSettings{
     Region:  "us-east-1",
     Profile: "myprofile",
 })
+```
 
-// Or using environment variables
-// export AWS_REGION=us-east-1
-// export AWS_ACCESS_KEY_ID=your-key
-// export AWS_SECRET_ACCESS_KEY=your-secret
-provider := bedrock.Create(bedrock.BedrockProviderSettings{
+You can also authenticate with environment variables:
+
+```bash
+export AWS_REGION=us-east-1
+export AWS_ACCESS_KEY_ID=your-key
+export AWS_SECRET_ACCESS_KEY=your-secret
+```
+
+```go
+bedrockProvider := bedrock.Create(bedrock.BedrockProviderSettings{
     Region: "us-east-1",
 })
 ```
 
-### 2. Define Tools
+## 2) Define a Tool
 
 ```go
-import "github.com/iamanishx/go-ai/provider"
+import (
+    "fmt"
+
+    "github.com/iamanishx/go-ai/provider"
+)
 
 weatherTool := provider.Tool{
     Name:        "get_weather",
@@ -44,41 +51,38 @@ weatherTool := provider.Tool{
     Parameters: map[string]interface{}{
         "type": "object",
         "properties": map[string]interface{}{
-            "location": map[string]interface{}{
-                "type":        "string",
-                "description": "City name",
-            },
+            "location": map[string]interface{}{"type": "string"},
         },
         "required": []string{"location"},
     },
     Execute: func(input map[string]interface{}) (string, error) {
-        location := input["location"].(string)
-        return fmt.Sprintf("Weather in %s: Sunny, 72°F", location), nil
+        location, _ := input["location"].(string)
+        return fmt.Sprintf("Weather in %s: Sunny", location), nil
     },
 }
 ```
 
-### 3. Create Agent
+## 3) Create a ToolLoopAgent
 
 ```go
 import "github.com/iamanishx/go-ai/agent"
 
-agent := agent.CreateToolLoopAgent(agent.ToolLoopAgentSettings{
-    Model:        provider.Chat("anthropic.claude-3-sonnet-v1:0"),
+toolAgent := agent.CreateToolLoopAgent(agent.ToolLoopAgentSettings{
+    Model:        bedrockProvider.Chat("anthropic.claude-3-sonnet-20240229-v1:0"),
     Tools:        []provider.Tool{weatherTool},
     ExecuteTools: true,
     MaxSteps:     10,
 })
 ```
 
-### 4. Generate Text
+## 4) Generate Text
 
 ```go
 ctx := context.Background()
 
-result, err := agent.Generate(ctx, agent.AgentCallOptions{
+result, err := toolAgent.Generate(ctx, agent.AgentCallOptions{
     Prompt: "What's the weather in San Francisco?",
-    System: "You are a helpful assistant.",
+    System: "You are a concise assistant.",
 })
 
 if err != nil {
@@ -88,12 +92,16 @@ if err != nil {
 fmt.Println(result.Text)
 ```
 
-## Streaming
+## 5) Stream Responses
 
 ```go
-stream, err := agent.Stream(ctx, agent.AgentCallOptions{
+stream, err := toolAgent.Stream(ctx, agent.AgentCallOptions{
     Prompt: "What's the weather in San Francisco?",
 })
+
+if err != nil {
+    log.Fatal(err)
+}
 
 defer stream.Close()
 
@@ -103,6 +111,8 @@ for part := range stream.Part() {
         fmt.Print(part.Text)
     case "tool-call":
         fmt.Printf("Calling tool: %s\n", part.ToolName)
+    case "error":
+        fmt.Printf("Stream error: %v\n", part.Error)
     case "finish":
         fmt.Printf("Done: %s\n", part.FinishReason)
     }
@@ -137,6 +147,7 @@ for part := range stream.Part() {
 
 ## Next Steps
 
-- [Agent Guide](/guide/agent/) - Learn about the Tool Loop Agent
-- [Provider Guide](/guide/provider/) - Configure Providers
-- [Examples](/guide/examples/) - More code examples
+- [Agent](/go-ai/agent/) - Tool loop behavior and callbacks
+- [Provider](/go-ai/provider/) - Provider architecture overview
+- [Amazon Bedrock](/go-ai/provider/bedrock/) - Bedrock settings and auth
+- [Examples](/go-ai/examples/) - Ready-to-run snippets

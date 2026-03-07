@@ -530,7 +530,7 @@ func convertTools(tools []provider.Tool) []map[string]interface{} {
 func signRequest(req *http.Request, region, accessKeyID, secretAccessKey, sessionToken string) {
 	service := "bedrock"
 	host := req.URL.Host
-	endpoint := req.URL.Path
+	endpoint := awsCanonicalURI(req.URL.Path)
 	method := req.Method
 
 	now := time.Now().UTC()
@@ -609,6 +609,22 @@ func signRequest(req *http.Request, region, accessKeyID, secretAccessKey, sessio
 	)
 
 	req.Header.Set("Authorization", authHeader)
+}
+
+func awsCanonicalURI(path string) string {
+	if path == "" {
+		return "/"
+	}
+	var b strings.Builder
+	for i := 0; i < len(path); i++ {
+		c := path[i]
+		if (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '-' || c == '_' || c == '.' || c == '~' || c == '/' {
+			b.WriteByte(c)
+		} else {
+			b.WriteString(fmt.Sprintf("%%%02X", c))
+		}
+	}
+	return b.String()
 }
 
 func sha256Hash(data []byte) string {

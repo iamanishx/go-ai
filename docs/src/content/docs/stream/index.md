@@ -1,17 +1,18 @@
 ---
 title: Stream
-description: Stream utilities for real-time responses
+description: Real-time stream handling for model and agent responses
 ---
 
-The Stream module provides utilities for handling streaming responses.
+The stream layer exposes `provider.StreamPart` events and helper readers.
 
 ## Overview
 
-Go AI SDK supports real-time streaming of:
+Go AI SDK supports streaming of:
 - Text deltas
 - Tool calls
 - Tool results
-- Usage information
+- Finish state and usage
+- Error events
 
 ## StreamReader
 
@@ -54,6 +55,8 @@ type StreamPart struct {
 | `text-start` | Start of text block |
 | `text-end` | End of text block |
 | `tool-call` | Tool call request |
+| `start` | Agent stream started |
+| `step-start` | Agent loop step started |
 | `tool-input-start` | Start of tool input |
 | `tool-input-delta` | Tool input chunk |
 | `tool-result` | Tool execution result |
@@ -69,6 +72,10 @@ stream, err := agent.Stream(ctx, agent.AgentCallOptions{
     Prompt: "Your prompt here",
 })
 
+if err != nil {
+    panic(err)
+}
+
 for part := range stream.Part() {
     switch part.Type {
     case "text-delta":
@@ -79,6 +86,8 @@ for part := range stream.Part() {
         fmt.Printf("Result: %s\n", part.ToolResult)
     case "finish":
         fmt.Printf("Done: %s\n", part.FinishReason)
+    case "error":
+        fmt.Printf("Error: %v\n", part.Error)
     }
 }
 ```
@@ -117,7 +126,7 @@ writer.Close()
 
 ## SSE Support
 
-The stream module includes SSE (Server-Sent Events) parsing:
+The stream module includes helpers for parsing JSON stream payloads:
 
 ```go
 parts, err := stream.ParseSSEStream(reader)

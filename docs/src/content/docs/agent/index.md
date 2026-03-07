@@ -1,24 +1,24 @@
 ---
 title: Agent
-description: Learn about the Tool Loop Agent
+description: Tool loop execution, callbacks, and stop control
 ---
 
-The Agent is the core component of Go AI SDK. It autonomously runs tools in a loop until a task is complete.
+The `ToolLoopAgent` is the orchestration layer. It calls the model, executes tool calls, appends tool results, and continues until a stop condition is met.
 
 ## Overview
 
-The Tool Loop Agent:
-1. Calls the LLM with your prompt
-2. If the model makes tool calls, executes them
-3. Adds tool results back to the conversation
-4. Repeats until a finish condition is met
+1. Sends current conversation state to the model
+2. Reads text and tool calls from the model response
+3. Executes matching tools when `ExecuteTools` is enabled
+4. Appends tool outputs as tool-role messages
+5. Repeats until stop condition or max steps
 
 ## Usage
 
 ### Creating an Agent
 
 ```go
-agent := agent.CreateToolLoopAgent(agent.ToolLoopAgentSettings{
+toolAgent := agent.CreateToolLoopAgent(agent.ToolLoopAgentSettings{
     Model:        chatModel,
     Tools:        []provider.Tool{tool1, tool2},
     ExecuteTools: true,
@@ -29,7 +29,7 @@ agent := agent.CreateToolLoopAgent(agent.ToolLoopAgentSettings{
 ### Generate (Non-Streaming)
 
 ```go
-result, err := agent.Generate(ctx, agent.AgentCallOptions{
+result, err := toolAgent.Generate(ctx, agent.AgentCallOptions{
     Prompt: "What's the weather in San Francisco?",
     System: "You are a helpful assistant.",
 })
@@ -38,13 +38,20 @@ result, err := agent.Generate(ctx, agent.AgentCallOptions{
 ### Stream (Streaming)
 
 ```go
-stream, err := agent.Stream(ctx, agent.AgentCallOptions{
+stream, err := toolAgent.Stream(ctx, agent.AgentCallOptions{
     Prompt: "What's the weather in San Francisco?",
 })
 defer stream.Close()
 
 for part := range stream.Part() {
-    fmt.Print(part.Text)
+    switch part.Type {
+    case "text-delta":
+        fmt.Print(part.Text)
+    case "tool-call":
+        fmt.Printf("\n[tool call: %s]\n", part.ToolName)
+    case "error":
+        fmt.Printf("\n[stream error: %v]\n", part.Error)
+    }
 }
 ```
 
@@ -116,10 +123,10 @@ OnFinish: func(event agent.OnFinishEvent) {
 
 ## Stop Conditions
 
-By default, the agent stops after 20 steps. You can customize this:
+By default, the agent stops after 20 steps. You can override this with `MaxSteps` or with custom `StopWhen` conditions.
 
 ```go
-agent := agent.CreateToolLoopAgent(agent.ToolLoopAgentSettings{
+toolAgent := agent.CreateToolLoopAgent(agent.ToolLoopAgentSettings{
     Model:    chatModel,
     Tools:    tools,
     MaxSteps: 5, // Custom max steps
@@ -128,7 +135,7 @@ agent := agent.CreateToolLoopAgent(agent.ToolLoopAgentSettings{
 
 ## Tool Definition
 
-Tools define what the agent can do:
+Tools are declared with name, JSON-schema-like parameters, and optional execute function.
 
 ```go
 weatherTool := provider.Tool{
@@ -155,7 +162,6 @@ weatherTool := provider.Tool{
         if u, ok := input["unit"].(string); ok {
             unit = u
         }
-        // Call weather API...
         return fmt.Sprintf("Weather in %s: 22°C", location), nil
     },
 }

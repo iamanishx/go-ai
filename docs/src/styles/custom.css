@@ -1,54 +1,73 @@
 :root {
-  /* Go Blue Accent / Vercel monochrome contrast */
-  --sl-color-accent-low: #004d7a;
+  --sl-color-accent-low: #0e3d5d;
   --sl-color-accent: #00add8;
-  --sl-color-accent-high: #e0f6ff;
+  --sl-color-accent-high: #c9f2ff;
 
   --sl-color-white: #ffffff;
-  --sl-color-gray-1: #ececf1;
-  --sl-color-gray-2: #8e8e99;
-  --sl-color-gray-3: #52525b;
-  --sl-color-gray-4: #3f3f46;
-  --sl-color-gray-5: #27272a;
-  --sl-color-gray-6: #18181b;
-  --sl-color-black: #000000;
+  --sl-color-gray-1: #e7edf2;
+  --sl-color-gray-2: #9faebb;
+  --sl-color-gray-3: #637285;
+  --sl-color-gray-4: #465365;
+  --sl-color-gray-5: #2b3441;
+  --sl-color-gray-6: #111723;
+  --sl-color-black: #070b12;
   
-  --sl-color-bg-nav: #000000;
-  --sl-color-bg-sidebar: #000000;
-  --sl-color-bg: #000000;
+  --sl-color-bg-nav: #070b12;
+  --sl-color-bg-sidebar: #0b111a;
+  --sl-color-bg: #070b12;
 }
 
 :root[data-theme='dark'] {
-  --sl-color-bg: #000000;
-  --sl-color-bg-nav: #000000;
-  --sl-color-bg-sidebar: #000000;
-  --sl-color-bg-inline-code: #111111;
-  
-  /* Make header border cleaner */
-  --sl-color-hairline: #333333;
-  --sl-color-hairline-shade: #1a1a1a;
+  --sl-color-bg: #070b12;
+  --sl-color-bg-nav: #070b12;
+  --sl-color-bg-sidebar: #0b111a;
+  --sl-color-bg-inline-code: #151e2b;
+  --sl-color-hairline: #263242;
+  --sl-color-hairline-shade: #121824;
 }
 
 :root[data-theme='light'] {
-  --sl-color-bg: #ffffff;
+  --sl-color-bg: #f8fbfd;
   --sl-color-bg-nav: #ffffff;
-  --sl-color-bg-sidebar: #fcfcfc;
-  --sl-color-bg-inline-code: #f3f4f6;
-  --sl-color-hairline: #e5e7eb;
+  --sl-color-bg-sidebar: #f3f8fc;
+  --sl-color-bg-inline-code: #edf3f8;
+  --sl-color-hairline: #d7e1ea;
 }
 
-/* Vercel style clean site title */
 .site-title {
   font-weight: 700;
   letter-spacing: -0.02em;
 }
 
-/* Splash page adjustments */
 .hero h1 {
   letter-spacing: -0.04em;
   font-weight: 800 !important;
 }
 
 .hero {
-  padding-bottom: 2rem !important;
+  padding-bottom: 2.4rem !important;
+}
+
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: -3rem -2rem auto -2rem;
+  height: 260px;
+  background: radial-gradient(circle at 20% 50%, rgba(0, 173, 216, 0.18), transparent 50%),
+    radial-gradient(circle at 80% 30%, rgba(0, 95, 135, 0.2), transparent 45%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.card {
+  border-radius: 14px;
+}
+
+:root[data-theme='dark'] .card {
+  background: linear-gradient(180deg, rgba(18, 25, 38, 0.7), rgba(10, 14, 21, 0.85));
+  border-color: #1f2d3c;
+}
+
+:root[data-theme='light'] .card {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(244, 250, 255, 0.95));
 }

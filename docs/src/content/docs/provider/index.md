@@ -1,13 +1,13 @@
 ---
 title: Provider
-description: Learn about the provider system and available providers
+description: Provider model interfaces and available implementations
 ---
 
-The Provider system allows Go AI SDK to work with any LLM backend.
+The provider layer defines model interfaces and concrete provider implementations.
 
 ## Overview
 
-Providers are modular - you can swap between different LLM services without changing your agent code.
+Providers are modular, and the agent consumes models through the shared `GenerateText` and `StreamText` interface.
 
 ## Available Providers
 
@@ -19,7 +19,7 @@ Native integration with AWS Bedrock supporting:
 - Meta Llama
 - And more...
 
-[See Bedrock Provider →](/reference/provider/bedrock/)
+[See Bedrock Provider ->](/go-ai/provider/bedrock/)
 
 ## Creating a Provider
 
@@ -38,10 +38,12 @@ provider := bedrock.Create(bedrock.BedrockProviderSettings{
 model := provider.Chat("anthropic.claude-3-sonnet-v1:0")
 
 // Use with agent
-agent := agent.CreateToolLoopAgent(agent.ToolLoopAgentSettings{
+toolAgent := agent.CreateToolLoopAgent(agent.ToolLoopAgentSettings{
     Model: model,
     Tools: tools,
 })
+
+_ = toolAgent
 ```
 
 ## Adding New Providers

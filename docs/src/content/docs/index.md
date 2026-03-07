@@ -1,9 +1,9 @@
 ---
 title: Go AI SDK
-description: A Go SDK for building AI-powered applications with Large Language Models
+description: Go-first toolkit for Bedrock models, tool loops, and streaming
 template: splash
 hero:
-  tagline: A powerful, type-safe Go library for building AI-powered applications. Inspired by the Vercel AI SDK.
+  tagline: Build Bedrock-powered AI workflows in Go with tool loops and streaming.
   actions:
     - text: Get Started
       link: /go-ai/guides/getting-started/
@@ -15,51 +15,58 @@ hero:
       variant: minimal
 ---
 
-import { Card, CardGrid } from '@astrojs/starlight/components';
+## Why this project
 
-## Why Go AI SDK?
-
-<CardGrid stagger>
-	<Card title="Type Safety" icon="approve-check">
-		Full type safety with Go's strong type system. Catch errors at compile time.
-	</Card>
-	<Card title="Provider Agnostic" icon="setting">
-		Works with any LLM provider. Easily swap between different models.
-	</Card>
-	<Card title="Tool Loop Agent" icon="rocket">
-		Built-in autonomous agent that runs tools in a loop until the task is complete.
-	</Card>
-	<Card title="Streaming Support" icon="list-format">
-		Real-time streaming responses for text, tool calls, and tool results.
-	</Card>
-</CardGrid>
-
-<br />
+- Bedrock provider with multiple auth modes (profile, env, static creds, custom provider)
+- Tool loop agent that can run with tools enabled or disabled
+- Streaming APIs for both direct model calls and agent flows
+- Simple package surface for `go get` usage in backend services
 
 ## Quick Example
 
 ```go
 import (
     "github.com/iamanishx/go-ai/agent"
-    "github.com/iamanishx/go-ai/provider/bedrock"
     "github.com/iamanishx/go-ai/provider"
+    "github.com/iamanishx/go-ai/provider/bedrock"
 )
 
-// 1. Initialize AWS Bedrock Provider
-provider := bedrock.Create(bedrock.BedrockProviderSettings{
+bedrockProvider := bedrock.Create(bedrock.BedrockProviderSettings{
     Region:  "us-east-1",
     Profile: "myprofile",
 })
 
-// 2. Create the Agent
-agent := agent.CreateToolLoopAgent(agent.ToolLoopAgentSettings{
-    Model: provider.Chat("anthropic.claude-3-sonnet-v1:0"),
-    Tools: []provider.Tool{weatherTool},
+toolAgent := agent.CreateToolLoopAgent(agent.ToolLoopAgentSettings{
+    Model: bedrockProvider.Chat("anthropic.claude-3-sonnet-20240229-v1:0"),
+    Tools: []provider.Tool{
+        {
+            Name:        "get_weather",
+            Description: "Get weather for a location",
+            Parameters: map[string]interface{}{
+                "type": "object",
+                "properties": map[string]interface{}{
+                    "location": map[string]interface{}{"type": "string"},
+                },
+                "required": []string{"location"},
+            },
+        },
+    },
     ExecuteTools: true,
 })
 
-// 3. Generate a Response
-result, err := agent.Generate(ctx, agent.AgentCallOptions{
+result, err := toolAgent.Generate(ctx, agent.AgentCallOptions{
     Prompt: "What's the weather in San Francisco?",
 })
+
+if err != nil {
+    panic(err)
+}
+
+_ = result.Text
 ```
+
+## Read next
+
+- [Getting Started](/go-ai/guides/getting-started/)
+- [Agent](/go-ai/agent/)
+- [Amazon Bedrock Provider](/go-ai/provider/bedrock/)

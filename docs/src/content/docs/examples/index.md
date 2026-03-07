@@ -1,6 +1,6 @@
 ---
 title: Examples
-description: Complete code examples
+description: Practical snippets for agent, streaming, and callbacks
 ---
 
 Here are complete examples to help you get started with Go AI SDK.
@@ -23,12 +23,12 @@ import (
 func main() {
     ctx := context.Background()
 
-    provider := bedrock.Create(bedrock.BedrockProviderSettings{
+    bedrockProvider := bedrock.Create(bedrock.BedrockProviderSettings{
         Region:  "us-east-1",
         Profile: "myprofile",
     })
 
-    chatModel := provider.Chat("anthropic.claude-3-sonnet-v1:0")
+    chatModel := bedrockProvider.Chat("anthropic.claude-3-sonnet-20240229-v1:0")
 
     weatherTool := provider.Tool{
         Name:        "get_weather",
@@ -49,13 +49,13 @@ func main() {
         },
     }
 
-    agent := agent.CreateToolLoopAgent(agent.ToolLoopAgentSettings{
+    toolAgent := agent.CreateToolLoopAgent(agent.ToolLoopAgentSettings{
         Model:        chatModel,
         Tools:        []provider.Tool{weatherTool},
         ExecuteTools: true,
     })
 
-    result, err := agent.Generate(ctx, agent.AgentCallOptions{
+    result, err := toolAgent.Generate(ctx, agent.AgentCallOptions{
         Prompt: "What's the weather in San Francisco?",
         System: "You are a helpful assistant.",
     })
@@ -71,9 +71,13 @@ func main() {
 ## Streaming Example
 
 ```go
-stream, err := agent.Stream(ctx, agent.AgentCallOptions{
+stream, err := toolAgent.Stream(ctx, agent.AgentCallOptions{
     Prompt: "Tell me a story",
 })
+
+if err != nil {
+    panic(err)
+}
 
 defer stream.Close()
 
@@ -87,6 +91,8 @@ for part := range stream.Part() {
         fmt.Printf("[Result: %s]\n", part.ToolResult)
     case "finish":
         fmt.Printf("\n[Done: %s]\n", part.FinishReason)
+    case "error":
+        fmt.Printf("\n[Error: %v]\n", part.Error)
     }
 }
 ```
@@ -94,34 +100,34 @@ for part := range stream.Part() {
 ## With Callbacks
 
 ```go
-agent := agent.CreateToolLoopAgent(agent.ToolLoopAgentSettings{
+toolAgent := agent.CreateToolLoopAgent(agent.ToolLoopAgentSettings{
     Model:        chatModel,
     Tools:        []provider.Tool{weatherTool},
     ExecuteTools: true,
     MaxSteps:     10,
 
     OnStart: func(event agent.OnStartEvent) {
-        fmt.Println("🚀 Agent started")
+        fmt.Println("Agent started")
     },
 
     OnStepStart: func(event agent.OnStepStartEvent) {
-        fmt.Printf("📝 Step %d started\n", event.StepNumber)
+        fmt.Printf("Step %d started\n", event.StepNumber)
     },
 
     OnStepFinish: func(event agent.OnStepFinishEvent) {
-        fmt.Printf("✅ Step %d finished: %s\n", event.StepNumber, event.Text)
+        fmt.Printf("Step %d finished: %s\n", event.StepNumber, event.Text)
     },
 
     OnToolCallStart: func(event agent.OnToolCallStartEvent) {
-        fmt.Printf("🔧 Calling tool: %s\n", event.ToolName)
+        fmt.Printf("Calling tool: %s\n", event.ToolName)
     },
 
     OnToolCallFinish: func(event agent.OnToolCallFinishEvent) {
-        fmt.Printf("✓ Result: %s\n", event.Output)
+        fmt.Printf("Result: %s\n", event.Output)
     },
 
     OnFinish: func(event agent.OnFinishEvent) {
-        fmt.Printf("🎉 Done! Final: %s\n", event.Text)
+        fmt.Printf("Done. Final: %s\n", event.Text)
     },
 })
 ```
@@ -150,7 +156,7 @@ tools := []provider.Tool{
     },
 }
 
-agent := agent.CreateToolLoopAgent(agent.ToolLoopAgentSettings{
+toolAgent := agent.CreateToolLoopAgent(agent.ToolLoopAgentSettings{
     Model:        chatModel,
     Tools:        tools,
     ExecuteTools: true,
@@ -160,7 +166,7 @@ agent := agent.CreateToolLoopAgent(agent.ToolLoopAgentSettings{
 ## Custom Stop Conditions
 
 ```go
-agent := agent.CreateToolLoopAgent(agent.ToolLoopAgentSettings{
+toolAgent := agent.CreateToolLoopAgent(agent.ToolLoopAgentSettings{
     Model:    chatModel,
     Tools:    tools,
     MaxSteps: 5, // Stop after 5 steps

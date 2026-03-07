@@ -1,30 +1,33 @@
 ---
 title: Amazon Bedrock
-description: AWS Bedrock provider documentation
+description: Configure Bedrock models, auth methods, and generation options
 ---
 
-Amazon Bedrock is a fully managed service that offers a choice of high-performing foundation models.
+Amazon Bedrock is the current provider implementation in this project.
 
-## Setup
-
-### Installation
-
-No additional dependencies required.
-
-### Authentication
-
-The Bedrock provider supports multiple authentication methods:
-
-#### 1. AWS Profile (Recommended)
+## Create Provider
 
 ```go
-provider := bedrock.Create(bedrock.BedrockProviderSettings{
+import "github.com/iamanishx/go-ai/provider/bedrock"
+
+bedrockProvider := bedrock.Create(bedrock.BedrockProviderSettings{
     Region:  "us-east-1",
-    Profile: "myprofile", // loads from ~/.aws/credentials
+    Profile: "myprofile",
 })
 ```
 
-#### 2. Environment Variables
+## Authentication Options
+
+### AWS profile
+
+```go
+bedrock.Create(bedrock.BedrockProviderSettings{
+    Region:  "us-east-1",
+    Profile: "myprofile",
+})
+```
+
+### Environment variables
 
 ```bash
 export AWS_REGION=us-east-1
@@ -33,15 +36,15 @@ export AWS_SECRET_ACCESS_KEY=your-secret
 ```
 
 ```go
-provider := bedrock.Create(bedrock.BedrockProviderSettings{
+bedrock.Create(bedrock.BedrockProviderSettings{
     Region: "us-east-1",
 })
 ```
 
-#### 3. Static Credentials
+### Static credentials
 
 ```go
-provider := bedrock.Create(bedrock.BedrockProviderSettings{
+bedrock.Create(bedrock.BedrockProviderSettings{
     Region:          "us-east-1",
     AccessKeyID:     "YOUR_ACCESS_KEY_ID",
     SecretAccessKey: "YOUR_SECRET_ACCESS_KEY",
@@ -49,10 +52,10 @@ provider := bedrock.Create(bedrock.BedrockProviderSettings{
 })
 ```
 
-#### 4. Custom Credential Provider
+### Custom credential provider
 
 ```go
-provider := bedrock.Create(bedrock.BedrockProviderSettings{
+bedrock.Create(bedrock.BedrockProviderSettings{
     Region: "us-east-1",
     CredentialProvider: &bedrock.SharedConfigCredentialProvider{
         Profile: "myprofile",
@@ -60,116 +63,79 @@ provider := bedrock.Create(bedrock.BedrockProviderSettings{
 })
 ```
 
-#### 5. Default Chain
+### Default chain
 
 ```go
-provider := bedrock.Create(bedrock.BedrockProviderSettings{
-    Region:            "us-east-1",
+bedrock.Create(bedrock.BedrockProviderSettings{
+    Region:             "us-east-1",
     CredentialProvider: bedrock.NewDefaultCredentialProviderChain(),
 })
 ```
 
-## Supported Models
-
-### Anthropic Claude
+## Generate Text
 
 ```go
-model := provider.Chat("anthropic.claude-3-opus-20240229-v1:0")
-model := provider.Chat("anthropic.claude-3-sonnet-20240229-v1:0")
-model := provider.Chat("anthropic.claude-3-haiku-20240307-v1:0")
-```
+model := bedrockProvider.Chat("anthropic.claude-3-sonnet-20240229-v1:0")
 
-### Amazon Titan
-
-```go
-model := provider.Chat("amazon.titan-text-premium-v1:0")
-```
-
-### Meta Llama
-
-```go
-model := provider.Chat("meta.llama3-70b-instruct-v1:0")
-model := provider.Chat("meta.llama3-8b-instruct-v1:0")
-```
-
-## Options
-
-| Option | Type | Description |
-|--------|------|-------------|
-| `Region` | `string` | AWS region (default: us-east-1) |
-| `Profile` | `string` | AWS profile name |
-| `AccessKeyID` | `string` | AWS access key ID |
-| `SecretAccessKey` | `string` | AWS secret access key |
-| `SessionToken` | `string` | AWS session token |
-| `APIKey` | `string` | Bearer token (for API key auth) |
-| `BaseURL` | `string` | Custom endpoint URL |
-| `Headers` | `map[string]string` | Custom headers |
-| `CredentialProvider` | `CredentialProvider` | Custom credential provider |
-
-## Credential Providers
-
-### Built-in Providers
-
-- `EnvCredentialProvider` - Loads from environment variables
-- `SharedConfigCredentialProvider` - Loads from `~/.aws/config` and `~/.aws/credentials`
-- `WebIdentityCredentialProvider` - Loads from Web Identity Token
-- `StaticCredentialProvider` - Static credentials
-- `DefaultCredentialProviderChain` - Tries env → shared config
-
-### Custom Provider
-
-Implement the `CredentialProvider` interface:
-
-```go
-type CredentialProvider interface {
-    Retrieve(ctx context.Context) (Credentials, error)
-}
-
-type Credentials struct {
-    AccessKeyID     string
-    SecretAccessKey string
-    SessionToken    string
-}
-```
-
-## Usage with Agent
-
-```go
-provider := bedrock.Create(bedrock.BedrockProviderSettings{
-    Region:  "us-east-1",
-    Profile: "myprofile",
-})
-
-model := provider.Chat("anthropic.claude-3-sonnet-v1:0")
-
-agent := agent.CreateToolLoopAgent(agent.ToolLoopAgentSettings{
-    Model:        model,
-    Tools:        []provider.Tool{weatherTool},
-    ExecuteTools: true,
-})
-```
-
-## Direct Model Usage
-
-### Generate Text
-
-```go
 result, err := model.GenerateText(ctx, provider.GenerateTextOptions{
-    Prompt:  "Hello, how are you?",
-    System:  "You are a helpful assistant.",
-    MaxTokens: 1000,
+    Prompt:      "Hello, how are you?",
+    System:      "You are a helpful assistant.",
+    MaxTokens:   1000,
     Temperature: 0.7,
 })
+
+if err != nil {
+    panic(err)
+}
+
+_ = result.Text
 ```
 
-### Stream Text
+## Stream Text
 
 ```go
 stream, err := model.StreamText(ctx, provider.GenerateTextOptions{
-    Prompt: "Hello, how are you?",
+    Prompt: "Write a short poem about Go",
 })
 
+if err != nil {
+    panic(err)
+}
+
 for part := range stream {
-    fmt.Print(part.Text)
+    switch part.Type {
+    case "text-delta":
+        fmt.Print(part.Text)
+    case "tool-call":
+        fmt.Printf("\n[tool call: %s]\n", part.ToolName)
+    case "finish":
+        fmt.Printf("\n[finish: %s]\n", part.FinishReason)
+    case "error":
+        fmt.Printf("\n[error: %v]\n", part.Error)
+    }
 }
 ```
+
+## Supported Settings
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `Region` | `string` | AWS region (defaults to `us-east-1`) |
+| `Profile` | `string` | AWS profile name |
+| `AccessKeyID` | `string` | Static access key ID |
+| `SecretAccessKey` | `string` | Static secret access key |
+| `SessionToken` | `string` | Optional session token |
+| `APIKey` | `string` | Bearer token alternative |
+| `BaseURL` | `string` | Custom Bedrock endpoint |
+| `Headers` | `map[string]string` | Extra request headers |
+| `CredentialProvider` | `CredentialProvider` | Custom credentials source |
+
+When `GenerateTextOptions.MaxTokens` is not set, the Bedrock request defaults to `4096`.
+
+## Built-in Credential Providers
+
+- `EnvCredentialProvider`
+- `SharedConfigCredentialProvider`
+- `WebIdentityCredentialProvider`
+- `StaticCredentialProvider`
+- `DefaultCredentialProviderChain`

@@ -388,6 +388,8 @@ func (a *ToolLoopAgent) stream(ctx context.Context, opts AgentCallOptions) (*str
 
 	go func() {
 		messages := make([]provider.Message, 0)
+		var totalUsage provider.Usage
+		lastFinishReason := "stop"
 
 		for _, m := range opts.Messages {
 			messages = append(messages, m)
@@ -426,8 +428,40 @@ func (a *ToolLoopAgent) stream(ctx context.Context, opts AgentCallOptions) (*str
 			result, err := a.executeStep(ctx, messages, true, stepNum)
 			if err != nil {
 				reader.SetError(err)
+				reader.WritePart(provider.StreamPart{Type: "error", Error: err})
 				reader.Close()
 				return
+			}
+
+			totalUsage.InputTokens += result.Usage.InputTokens
+			totalUsage.OutputTokens += result.Usage.OutputTokens
+			totalUsage.TotalTokens += result.Usage.TotalTokens
+
+			if result.Text != "" {
+				reader.WritePart(provider.StreamPart{Type: "text-delta", Text: result.Text})
+			}
+
+			for _, tc := range result.ToolCalls {
+				inputJSON, _ := json.Marshal(tc.Input)
+				reader.WritePart(provider.StreamPart{
+					Type:       "tool-call",
+					ToolCallID: tc.ID,
+					ToolName:   tc.Name,
+					ToolInput:  string(inputJSON),
+				})
+			}
+
+			for _, tr := range result.ToolResults {
+				reader.WritePart(provider.StreamPart{
+					Type:       "tool-result",
+					ToolCallID: tr.ID,
+					ToolName:   tr.Name,
+					ToolResult: tr.Output,
+				})
+			}
+
+			if result.FinishReason != "" {
+				lastFinishReason = result.FinishReason
 			}
 
 			if a.onStepFinish != nil {
@@ -459,6 +493,12 @@ func (a *ToolLoopAgent) stream(ctx context.Context, opts AgentCallOptions) (*str
 				break
 			}
 		}
+
+		reader.WritePart(provider.StreamPart{
+			Type:         "finish",
+			FinishReason: lastFinishReason,
+			Usage:        totalUsage,
+		})
 
 		reader.Close()
 	}()
