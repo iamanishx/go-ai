@@ -295,6 +295,7 @@ func (a *ToolLoopAgent) generate(ctx context.Context, opts AgentCallOptions, str
 	}
 
 	var steps []StepResult
+	var allToolCalls []provider.ToolCall
 	var allToolResults []provider.ToolCall
 	var totalUsage provider.Usage
 
@@ -311,6 +312,8 @@ func (a *ToolLoopAgent) generate(ctx context.Context, opts AgentCallOptions, str
 			return AgentGenerateResult{}, err
 		}
 
+		messages = result.Messages
+
 		stepResult := StepResult{
 			StepNumber:   stepNum,
 			Text:         result.Text,
@@ -322,6 +325,7 @@ func (a *ToolLoopAgent) generate(ctx context.Context, opts AgentCallOptions, str
 		}
 
 		steps = append(steps, stepResult)
+		allToolCalls = append(allToolCalls, result.ToolCalls...)
 		allToolResults = append(allToolResults, result.ToolResults...)
 
 		totalUsage.InputTokens += result.Usage.InputTokens
@@ -350,6 +354,10 @@ func (a *ToolLoopAgent) generate(ctx context.Context, opts AgentCallOptions, str
 		if shouldStop {
 			break
 		}
+
+		if len(result.ToolCalls) == 0 {
+			break
+		}
 	}
 
 	finishReason := "stop"
@@ -365,7 +373,7 @@ func (a *ToolLoopAgent) generate(ctx context.Context, opts AgentCallOptions, str
 	if a.onFinish != nil {
 		a.onFinish(OnFinishEvent{
 			Text:         finalText,
-			ToolCalls:    allToolResults,
+			ToolCalls:    allToolCalls,
 			ToolResults:  allToolResults,
 			FinishReason: finishReason,
 			Usage:        totalUsage,
@@ -376,7 +384,7 @@ func (a *ToolLoopAgent) generate(ctx context.Context, opts AgentCallOptions, str
 	return AgentGenerateResult{
 		Text:         finalText,
 		FinishReason: finishReason,
-		ToolCalls:    allToolResults,
+		ToolCalls:    allToolCalls,
 		ToolResults:  allToolResults,
 		Usage:        totalUsage,
 		Steps:        steps,
@@ -432,6 +440,8 @@ func (a *ToolLoopAgent) stream(ctx context.Context, opts AgentCallOptions) (*str
 				reader.Close()
 				return
 			}
+
+			messages = result.Messages
 
 			totalUsage.InputTokens += result.Usage.InputTokens
 			totalUsage.OutputTokens += result.Usage.OutputTokens
@@ -492,6 +502,10 @@ func (a *ToolLoopAgent) stream(ctx context.Context, opts AgentCallOptions) (*str
 			if shouldStop {
 				break
 			}
+
+			if len(result.ToolCalls) == 0 {
+				break
+			}
 		}
 
 		reader.WritePart(provider.StreamPart{
@@ -512,6 +526,7 @@ type stepResult struct {
 	ToolResults  []provider.ToolCall
 	FinishReason string
 	Usage        provider.Usage
+	Messages     []provider.Message
 }
 
 func (a *ToolLoopAgent) executeStep(ctx context.Context, messages []provider.Message, streaming bool, stepNum int) (stepResult, error) {
@@ -565,12 +580,20 @@ func (a *ToolLoopAgent) executeStep(ctx context.Context, messages []provider.Mes
 			finishReason = "tool-use"
 		}
 
+		if len(toolCalls) == 0 && text.String() != "" {
+			messages = append(messages, provider.Message{
+				Role:    "assistant",
+				Content: text.String(),
+			})
+		}
+
 		return stepResult{
 			Text:         text.String(),
 			ToolCalls:    toolCalls,
 			ToolResults:  toolResults,
 			FinishReason: finishReason,
 			Usage:        usage,
+			Messages:     messages,
 		}, nil
 	} else {
 		result, err := a.model.GenerateText(ctx, genOpts)
@@ -595,6 +618,7 @@ func (a *ToolLoopAgent) executeStep(ctx context.Context, messages []provider.Mes
 			ToolResults:  toolResults,
 			FinishReason: result.FinishReason,
 			Usage:        result.Usage,
+			Messages:     messages,
 		}, nil
 	}
 }
