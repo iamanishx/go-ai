@@ -5,6 +5,8 @@ description: Configure Bedrock models, auth methods, and generation options
 
 Amazon Bedrock is the current provider implementation in this project.
 
+This provider now uses the official AWS SDK for Go v2 for credentials, SigV4 signing, non-stream requests (`Converse`), and real-time streaming (`ConverseStream`).
+
 ## Create Provider
 
 ```go
@@ -72,6 +74,8 @@ bedrock.Create(bedrock.BedrockProviderSettings{
 })
 ```
 
+Credential resolution follows AWS SDK defaults when explicit settings are not provided.
+
 ## Generate Text
 
 ```go
@@ -131,6 +135,8 @@ for part := range stream {
 | `CredentialProvider` | `CredentialProvider` | Custom credentials source |
 
 When `GenerateTextOptions.MaxTokens` is not set, the Bedrock request defaults to `4096`.
+
+`StreamText` uses Bedrock `ConverseStream`, so `text-delta` events are emitted incrementally.
 
 ## Built-in Credential Providers
 

@@ -156,6 +156,8 @@ go-ai/
 ## Notes
 
 - This project currently ships the Bedrock provider.
+- Bedrock auth and request signing are handled by AWS SDK for Go v2.
+- Bedrock streaming uses `ConverseStream` for incremental text deltas.
 - API behavior may change while the library stabilizes.
 
 ## License
