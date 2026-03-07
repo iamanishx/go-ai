@@ -16,7 +16,7 @@ A Go SDK for building AI-powered applications with Large Language Models (LLMs).
 ## Installation
 
 ```bash
-go get github.com/ai-sdk/go-ai
+go get github.com/iamanishx/go-ai
 ```
 
 ## Quick Start
@@ -29,9 +29,9 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/ai-sdk/go-ai/agent"
-	"github.com/ai-sdk/go-ai/provider"
-	"github.com/ai-sdk/go-ai/provider/bedrock"
+	"github.com/iamanishx/go-ai/agent"
+	"github.com/iamanishx/go-ai/provider"
+	"github.com/iamanishx/go-ai/provider/bedrock"
 )
 
 func main() {
@@ -382,7 +382,7 @@ package openai
 
 import (
     "context"
-    "github.com/ai-sdk/go-ai/provider"
+    "github.com/iamanishx/go-ai/provider"
 )
 
 type Provider interface {

@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/ai-sdk/go-ai/agent"
-	"github.com/ai-sdk/go-ai/provider"
-	"github.com/ai-sdk/go-ai/provider/bedrock"
+	"github.com/iamanishx/go-ai/agent"
+	"github.com/iamanishx/go-ai/provider"
+	"github.com/iamanishx/go-ai/provider/bedrock"
 )
 
 func main() {
