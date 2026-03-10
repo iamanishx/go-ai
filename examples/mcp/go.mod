@@ -3,10 +3,10 @@ module github.com/iamanishx/go-ai/examples/mcp
 go 1.23.0
 
 require (
-	github.com/iamanishx/go-ai/agent v0.0.0
-	github.com/iamanishx/go-ai/mcp v0.0.0
-	github.com/iamanishx/go-ai/provider v0.0.0
-	github.com/iamanishx/go-ai/provider/bedrock v0.0.0
+	github.com/iamanishx/go-ai/agent v0.1.0
+	github.com/iamanishx/go-ai/mcp v0.1.0
+	github.com/iamanishx/go-ai/provider v0.1.0
+	github.com/iamanishx/go-ai/provider/bedrock v0.1.0
 )
 
 require (
@@ -26,7 +26,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sts v1.27.0 // indirect
 	github.com/aws/smithy-go v1.22.0 // indirect
 	github.com/google/jsonschema-go v0.3.0 // indirect
-	github.com/iamanishx/go-ai/stream v0.0.0 // indirect
+	github.com/iamanishx/go-ai/stream v0.1.0 // indirect
 	github.com/modelcontextprotocol/go-sdk v1.0.0 // indirect
 	github.com/yosida95/uritemplate/v3 v3.0.2 // indirect
 )

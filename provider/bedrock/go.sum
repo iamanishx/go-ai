@@ -30,5 +30,5 @@ github.com/aws/smithy-go v1.22.0 h1:uunKnWlcoL3zO7q+gG2Pk53joueEOsnNB28QdMsmiMM=
 github.com/aws/smithy-go v1.22.0/go.mod h1:irrKGvNn1InZwb2d7fkIRNucdfwR8R+Ts3wxYa/cJHg=
 github.com/google/go-cmp v0.5.8 h1:e6P7q2lk1O+qJJb4BtCQXlK8vWEO8V1ZeuEdJNOqZyg=
 github.com/google/go-cmp v0.5.8/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
-github.com/iamanishx/go-ai/provider v0.0.0-20260310170313-062efe3e1bf9 h1:PAY9JMGVpB7VJ/1x/ypBnUlhUxRAZTcxlq0nZ7F1jvI=
-github.com/iamanishx/go-ai/provider v0.0.0-20260310170313-062efe3e1bf9/go.mod h1:MbQ3nOEMAXbq0rWCUnS2/TjpmOS2hfLQJ2rPNb7G1qs=
+github.com/iamanishx/go-ai/provider v0.0.0-20260310172418-a28445b34355 h1:3CZTDqHzk9Hf4Skrg72jynhiv02SIZg5yMqdlixeEuo=
+github.com/iamanishx/go-ai/provider v0.0.0-20260310172418-a28445b34355/go.mod h1:MbQ3nOEMAXbq0rWCUnS2/TjpmOS2hfLQJ2rPNb7G1qs=
