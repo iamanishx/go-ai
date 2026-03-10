@@ -6,6 +6,18 @@ This project is not affiliated with Vercel and is currently evolving quickly.
 
 ## Installation
 
+Install only what you need:
+
+```bash
+go get github.com/iamanishx/go-ai/agent
+go get github.com/iamanishx/go-ai/provider/bedrock
+go get github.com/iamanishx/go-ai/mcp
+```
+
+Or install a single module only.
+
+## Core Install
+
 ```bash
 go get github.com/iamanishx/go-ai
 ```
@@ -145,6 +157,44 @@ bedrock.Create(bedrock.BedrockProviderSettings{
 ## Streaming
 
 The quick start above uses streaming by default.
+
+## MCP Client (stdio / sse / http)
+
+```go
+import (
+    "context"
+    "os"
+
+    "github.com/iamanishx/go-ai/mcp"
+)
+
+ctx := context.Background()
+
+client, err := mcp.CreateMCPClient(ctx, mcp.MCPClientConfig{
+    Transport: mcp.NewStdioClientTransport(mcp.StdioConfig{
+        Command: "npx",
+        Args: []string{"-y", "@modelcontextprotocol/server-filesystem", "."},
+        Stderr: os.Stderr,
+    }),
+})
+
+if err != nil {
+    panic(err)
+}
+defer client.Close()
+
+mcpTools, err := client.Tools(ctx)
+if err != nil {
+    panic(err)
+}
+
+_ = mcpTools
+```
+
+Alternative transports:
+
+- `mcp.NewSSEClientTransport(mcp.SSETransportConfig{URL: "https://.../sse"})`
+- `mcp.NewHTTPClientTransport(mcp.HTTPTransportConfig{URL: "https://.../mcp"})`
 
 ## Package Layout
 
