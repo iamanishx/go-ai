@@ -6,6 +6,8 @@ This project is not affiliated with Vercel and is currently evolving quickly.
 
 ## Installation
 
+Note: submodule imports are available on this branch and will be fully consumable from released tags after merge/versioning.
+
 Install only what you need:
 
 ```bash

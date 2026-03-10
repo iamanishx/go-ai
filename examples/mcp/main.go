@@ -41,9 +41,11 @@ func main() {
 		mcpTools = append(mcpTools, tool)
 	}
 
+	profile := os.Getenv("AWS_PROFILE")
+
 	bedrockProvider := bedrock.Create(bedrock.BedrockProviderSettings{
 		Region:  "us-east-1",
-		Profile: "clickpe",
+		Profile: profile,
 	})
 
 	ag := agentpkg.CreateToolLoopAgent(agentpkg.ToolLoopAgentSettings{

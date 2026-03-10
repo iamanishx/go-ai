@@ -3,6 +3,7 @@ package mcp
 import (
 	"io"
 	"net/http"
+	"os"
 	"os/exec"
 
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
@@ -22,7 +23,7 @@ func NewStdioClientTransport(cfg StdioConfig) sdkmcp.Transport {
 		cmd.Dir = cfg.Cwd
 	}
 	if len(cfg.Env) > 0 {
-		cmd.Env = append(cmd.Env, cfg.Env...)
+		cmd.Env = append(os.Environ(), cfg.Env...)
 	}
 	if cfg.Stderr != nil {
 		cmd.Stderr = cfg.Stderr
