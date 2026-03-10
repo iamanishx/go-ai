@@ -97,6 +97,38 @@ for part := range stream.Part() {
 }
 ```
 
+## MCP Example
+
+```go
+mcpClient, err := mcp.CreateMCPClient(ctx, mcp.MCPClientConfig{
+    Transport: mcp.NewStdioClientTransport(mcp.StdioConfig{
+        Command: "npx",
+        Args: []string{"-y", "@modelcontextprotocol/server-filesystem", "."},
+        Stderr: os.Stderr,
+    }),
+})
+if err != nil {
+    log.Fatal(err)
+}
+defer mcpClient.Close()
+
+mcpToolsMap, err := mcpClient.Tools(ctx)
+if err != nil {
+    log.Fatal(err)
+}
+
+mcpTools := make([]provider.Tool, 0, len(mcpToolsMap))
+for _, tool := range mcpToolsMap {
+    mcpTools = append(mcpTools, tool)
+}
+
+toolAgent := agent.CreateToolLoopAgent(agent.ToolLoopAgentSettings{
+    Model:        chatModel,
+    Tools:        mcpTools,
+    ExecuteTools: true,
+})
+```
+
 ## With Callbacks
 
 ```go

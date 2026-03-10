@@ -23,6 +23,7 @@ export default defineConfig({
           items: [
             { label: 'Agent', link: '/agent/' },
             { label: 'Stream', link: '/stream/' },
+            { label: 'MCP', link: '/mcp/' },
           ],
         },
         {
