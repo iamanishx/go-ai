@@ -5,6 +5,12 @@ description: Provider model interfaces and available implementations
 
 The provider layer defines model interfaces and concrete provider implementations.
 
+Install provider interfaces only:
+
+```bash
+go get github.com/iamanishx/go-ai/provider
+```
+
 ## Overview
 
 Providers are modular, and the agent consumes models through the shared `GenerateText` and `StreamText` interface.
@@ -24,7 +30,10 @@ Native integration with AWS Bedrock supporting:
 ## Creating a Provider
 
 ```go
-import "github.com/iamanishx/go-ai/provider/bedrock"
+import (
+    "github.com/iamanishx/go-ai/agent"
+    "github.com/iamanishx/go-ai/provider/bedrock"
+)
 
 provider := bedrock.Create(bedrock.BedrockProviderSettings{
     Region: "us-east-1",

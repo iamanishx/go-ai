@@ -7,6 +7,12 @@ Amazon Bedrock is the current provider implementation in this project.
 
 This provider now uses the official AWS SDK for Go v2 for credentials, SigV4 signing, non-stream requests (`Converse`), and real-time streaming (`ConverseStream`).
 
+Install Bedrock module:
+
+```bash
+go get github.com/iamanishx/go-ai/provider/bedrock
+```
+
 ## Create Provider
 
 ```go

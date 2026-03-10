@@ -1,9 +1,9 @@
 ---
 title: Go AI SDK
-description: Go-first toolkit for Bedrock models, tool loops, and streaming
+description: Modular Go toolkit for Bedrock, MCP, tool loops, and streaming
 template: splash
 hero:
-  tagline: Build Bedrock-powered AI workflows in Go with tool loops and streaming.
+  tagline: Build Bedrock and MCP-powered AI workflows in Go with tool loops and streaming.
   actions:
     - text: Get Started
       link: /go-ai/guides/getting-started/
@@ -18,9 +18,18 @@ hero:
 ## Why this project
 
 - Bedrock provider with multiple auth modes (profile, env, static creds, custom provider)
+- MCP client module with stdio, SSE, and HTTP transport helpers
 - Tool loop agent that can run with tools enabled or disabled
 - Streaming APIs for both direct model calls and agent flows
-- Simple package surface for `go get` usage in backend services
+- Independent modules so you can `go get` only what you need
+
+## Modular Install
+
+```bash
+go get github.com/iamanishx/go-ai/agent
+go get github.com/iamanishx/go-ai/provider/bedrock
+go get github.com/iamanishx/go-ai/mcp
+```
 
 ## Quick Example
 
@@ -70,3 +79,4 @@ _ = result.Text
 - [Getting Started](/go-ai/guides/getting-started/)
 - [Agent](/go-ai/agent/)
 - [Amazon Bedrock Provider](/go-ai/provider/bedrock/)
+- [MCP](/go-ai/mcp/)

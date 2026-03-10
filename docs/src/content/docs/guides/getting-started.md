@@ -8,7 +8,15 @@ This guide walks through the current production path: Bedrock provider + ToolLoo
 ## Installation
 
 ```bash
-go get github.com/iamanishx/go-ai
+go get github.com/iamanishx/go-ai/agent
+go get github.com/iamanishx/go-ai/provider
+go get github.com/iamanishx/go-ai/provider/bedrock
+```
+
+Optional MCP module:
+
+```bash
+go get github.com/iamanishx/go-ai/mcp
 ```
 
 ## 1) Create a Bedrock Provider
