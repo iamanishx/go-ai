@@ -39,10 +39,11 @@ type GenerateTextResult struct {
 }
 
 type Message struct {
-	Role       string
-	Content    string
-	ToolCalls  []ToolCall
-	ToolCallID string
+	Role        string
+	Content     string
+	ToolCalls   []ToolCall
+	ToolResults []ToolCall
+	ToolCallID  string
 }
 
 type ToolCall struct {

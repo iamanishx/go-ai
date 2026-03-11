@@ -448,6 +448,22 @@ func convertMessages(opts provider.GenerateTextOptions) []bedrocktypes.Message {
 	messages := make([]bedrocktypes.Message, 0, len(opts.Messages)+1)
 
 	for _, msg := range opts.Messages {
+		if len(msg.ToolResults) > 0 {
+			content := make([]bedrocktypes.ContentBlock, 0, len(msg.ToolResults))
+			for _, tr := range msg.ToolResults {
+				id := tr.ID
+				content = append(content, &bedrocktypes.ContentBlockMemberToolResult{Value: bedrocktypes.ToolResultBlock{
+					ToolUseId: &id,
+					Content:   []bedrocktypes.ToolResultContentBlock{&bedrocktypes.ToolResultContentBlockMemberText{Value: tr.Output}},
+				}})
+			}
+			messages = append(messages, bedrocktypes.Message{
+				Role:    bedrocktypes.ConversationRoleUser,
+				Content: content,
+			})
+			continue
+		}
+
 		if msg.ToolCallID != "" {
 			id := msg.ToolCallID
 			messages = append(messages, bedrocktypes.Message{

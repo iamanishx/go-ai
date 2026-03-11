@@ -689,10 +689,12 @@ func (a *ToolLoopAgent) executeToolCalls(ctx context.Context, toolCalls []provid
 			})
 		}
 
+	}
+
+	if len(toolResults) > 0 {
 		newMessages = append(newMessages, provider.Message{
-			Role:       "tool",
-			ToolCallID: tc.ID,
-			Content:    output,
+			Role:        "tool",
+			ToolResults: append([]provider.ToolCall{}, toolResults...),
 		})
 	}
 
