@@ -703,9 +703,12 @@ func (a *ToolLoopAgent) executeToolCalls(ctx context.Context, toolCalls []provid
 
 func parseInput(input string) map[string]interface{} {
 	if input == "" {
-		return nil
+		return map[string]interface{}{}
 	}
 	var result map[string]interface{}
 	json.Unmarshal([]byte(input), &result)
+	if result == nil {
+		return map[string]interface{}{}
+	}
 	return result
 }

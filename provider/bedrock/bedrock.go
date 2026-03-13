@@ -256,6 +256,9 @@ func (m *BedrockChatModel) GenerateText(ctx context.Context, opts provider.Gener
 				textBuilder.WriteString(b.Value)
 			case *bedrocktypes.ContentBlockMemberToolUse:
 				input := toMap(b.Value.Input)
+				if input == nil {
+					input = map[string]interface{}{}
+				}
 				id := ""
 				name := ""
 				if b.Value.ToolUseId != nil {
@@ -483,10 +486,14 @@ func convertMessages(opts provider.GenerateTextOptions) []bedrocktypes.Message {
 			for _, tc := range msg.ToolCalls {
 				id := tc.ID
 				name := tc.Name
+				input := tc.Input
+				if input == nil {
+					input = map[string]interface{}{}
+				}
 				content = append(content, &bedrocktypes.ContentBlockMemberToolUse{Value: bedrocktypes.ToolUseBlock{
 					ToolUseId: &id,
 					Name:      &name,
-					Input:     bedrockdoc.NewLazyDocument(tc.Input),
+					Input:     bedrockdoc.NewLazyDocument(input),
 				}})
 			}
 			messages = append(messages, bedrocktypes.Message{Role: bedrocktypes.ConversationRoleAssistant, Content: content})
